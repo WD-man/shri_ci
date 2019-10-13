@@ -1,0 +1,8 @@
+.git
+.idea
+.vscode
+build
+test
+.cache
+node_modules
+dest
