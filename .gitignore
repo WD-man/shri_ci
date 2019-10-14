@@ -6,3 +6,5 @@ node_modules/
 
 # typescript build output
 dist
+
+build_artifacts

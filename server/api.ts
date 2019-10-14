@@ -1,10 +1,14 @@
 import debugInit from 'debug';
 import axios from 'axios';
 import bodyParser from 'body-parser';
-import { networkInterfaces } from 'os';
+import { createHash } from 'crypto';
+import { readJson, outputJson, readdir } from 'fs-extra';
+import { join } from 'path';
+import config from '../ci.config.json';
 
-let agents = [];
+const outputPath = join(process.cwd(), config.buildArtifactsRepo);
 const taskQueue = [];
+let agents = [];
 let counter = 0;
 
 const errorDebug = debugInit('err: ');
@@ -14,25 +18,36 @@ enum Status {
   FREE,
 }
 
+const getHash = () => {
+  const current_date = new Date().valueOf().toString();
+  const random = Math.random().toString();
+  return createHash('sha1')
+    .update(current_date + random)
+    .digest('hex');
+};
+
+const checkAgent = async agent => {
+  if (!agent) return false;
+  try {
+    const { data } = await axios.get(`http://localhost:${agent.port}/ping`);
+    const { msg } = data;
+    return msg === 'pong';
+  } catch (err) {
+    return false;
+  }
+  return false;
+};
+
 const initCheckInterval = () => {
   setInterval(() => {
     if (!agents.length) return;
-    agents = agents.filter(async agent => {
-      try {
-        const { data } = await axios.get(`http://localhost:${agent.port}/ping`);
-        const { msg } = data;
-        if (msg === 'pong') return true;
-      } catch (err) {
-        return false;
-      }
-      return false;
-    });
+    agents = agents.filter(checkAgent);
   }, 10000);
 };
 
 const getFreeAgent = () => {
   const [free] = agents.filter(agent => {
-    return agent.statue === Status.FREE;
+    return agent.status === Status.FREE;
   });
   return free;
 };
@@ -71,9 +86,31 @@ export default (app, nextHandler) => {
     res.json({ msg: 'pong' });
   });
 
-  app.get('/notify_build_result', (req, res) => {
-    // Сожранение результатов
+  app.get('/data', async (req, res) => {
+    const { certainBuild } = req.query;
 
+    if (certainBuild) {
+      const result = await readJson(`${outputPath}/${certainBuild}.json`);
+      res.json(result);
+    } else {
+      let buildList;
+      try {
+        buildList = await readdir(outputPath);
+      } catch (err) {
+        return res.json([]);
+      }
+      const builds = await Promise.all(
+        buildList.map(async item => {
+          return await readJson(`${outputPath}/${item}`);
+        }),
+      );
+      res.json({
+        buildList: builds,
+      });
+    }
+  });
+
+  app.get('/notify_build_result', (req, res) => {
     if (!taskQueue.length) return;
 
     const agent = getFreeAgent();
@@ -83,7 +120,7 @@ export default (app, nextHandler) => {
     // Отправить задачу агенту
   });
 
-  app.post('/build', (req, res) => {
+  app.post('/build', async (req, res) => {
     const { body } = req;
     if (!agents.length) {
       res.set('location', '/');
@@ -93,17 +130,26 @@ export default (app, nextHandler) => {
     }
 
     const agent = getFreeAgent();
+    const isActive = await checkAgent(agent);
 
-    if (!agent) {
-      taskQueue.push([]);
+    if (!isActive) {
+      taskQueue.push({
+        ...body,
+      });
+      res.set('location', '/');
+      res.status(301);
+      return nextHandler(req, res, '/');
     }
+
+    const hash = getHash();
+    await axios.post(`http://localhost:${agent.port}/build`, {
+      hash,
+      ...body,
+    });
 
     res.set('location', '/');
     res.status(301);
-    return nextHandler(req, res, '/');
-    // Сдеать ping
-    //  отправить задачу
-    // Если все заняты поместит в очередь
+    res.end();
   });
 };
 
