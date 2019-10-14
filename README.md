@@ -1,13 +1,15 @@
-# nextjs with typeScript + express + nodemon example
+# ШРИ Инфраструктура
 
-froked from [next.js/examples/custom-server-typecript](https://github.com/zeit/next.js/tree/canary/examples/custom-server-typescript) and build express
+Склонируйте репозиторий и утсановите зависимости
 
-Install it and run:
+При разработке использовалась  
+__Node.js__ версии __12.6.0__
 
-```bash
-npm install
-npm run dev
-# or
-yarn
-yarn dev
-```
+**Кофигурационный файл:** __ci.config.json__ в корне репозитория
+
+Для запуска основного сервера запустите команду  
+__npm run start__
+
+
+Для запуска агента запустите команду  
+__npm run agent__
