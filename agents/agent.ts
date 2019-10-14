@@ -15,9 +15,6 @@ const initCheckInterval = () => {
     try {
       const { data } = await axios.get(`${mainUrl}/ping`);
       const {msg} = data;
-      console.log('-------------------------');
-      console.log('msg', msg);
-      console.log('-------------------------');
       if (msg === 'pong') return true;
     } catch (err) {
       process.exit(0);
@@ -33,12 +30,6 @@ app.use(
 );
 
 app.use(bodyParser.json());
-
-app.get('/', (req, res) => {
-  console.log('-------------------------');
-  console.log('get');
-  console.log('-------------------------');
-});
 
 app.get('/build', (req, res) => {});
 

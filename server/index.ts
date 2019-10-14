@@ -17,7 +17,7 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const server = express();
 
-  api(server);
+  api(server, handle);
 
   server.use(
     bodyParser.urlencoded({

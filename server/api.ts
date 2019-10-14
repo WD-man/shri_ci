@@ -1,5 +1,7 @@
 import debugInit from 'debug';
 import axios from 'axios';
+import bodyParser from 'body-parser';
+import { networkInterfaces } from 'os';
 
 let agents = [];
 const taskQueue = [];
@@ -18,7 +20,7 @@ const initCheckInterval = () => {
     agents = agents.filter(async agent => {
       try {
         const { data } = await axios.get(`http://localhost:${agent.port}/ping`);
-        const {msg} = data;
+        const { msg } = data;
         if (msg === 'pong') return true;
       } catch (err) {
         return false;
@@ -50,11 +52,19 @@ const createAgent = ({ query }) => {
   return newId;
 };
 
-export default app => {
+export default (app, nextHandler) => {
+  app.use(
+    bodyParser.urlencoded({
+      extended: true,
+    }),
+  );
+
+  app.use(bodyParser.json());
+
   app.get('/notify_agent', (req, res) => {
     const newId = createAgent(req);
     res.json({ id: newId });
-    debug('agent registered')
+    debug('agent registered');
   });
 
   app.get('/ping', (req, res) => {
@@ -73,10 +83,13 @@ export default app => {
     // Отправить задачу агенту
   });
 
-  app.get('/build', (req, res) => {
+  app.post('/build', (req, res) => {
+    const { body } = req;
     if (!agents.length) {
-      res.status(500).end();
+      res.set('location', '/');
+      res.status(301).end();
       errorDebug('No agents');
+      return;
     }
 
     const agent = getFreeAgent();
@@ -85,9 +98,9 @@ export default app => {
       taskQueue.push([]);
     }
 
-    console.log('-------------------------');
-    console.log('agent', agent);
-    console.log('-------------------------');
+    res.set('location', '/');
+    res.status(301);
+    return nextHandler(req, res, '/');
     // Сдеать ping
     //  отправить задачу
     // Если все заняты поместит в очередь
