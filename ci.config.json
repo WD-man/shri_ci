@@ -1,5 +1,5 @@
 {
   "port": 9001,
-  "repo": "",
+  "repo": "https://github.com/WD-man/shri_redux.git",
   "buildArtifactsRepo": "build_artifacts"
 }

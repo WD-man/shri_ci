@@ -1,12 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import axios from 'axios';
 
 const Index = ({ list = [] }) => {
+  const [interval, setIntervalDisp] = useState(null);
+  const [buildList, setList] = useState(list);
+
+  useEffect(() => {
+    if (interval) {
+      clearInterval(interval);
+    }
+    const currInt = setInterval(async () => {
+      const { data } = await axios.get('http://localhost:9001/data');
+      setList(data.buildList || []);
+    }, 5000);
+    setIntervalDisp(currInt);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [buildList]);
   const getBuilds = buildArray => {
     return buildArray
       .sort((a, b) => {
-        return Number(a.dateStart) > Number(b.dateStart);
+        return Number(a.timestampStart) > Number(b.timestampStart);
       })
       .map((build, index) => (
         <li key={build.hash}>
@@ -23,7 +39,7 @@ const Index = ({ list = [] }) => {
   };
   return (
     <div>
-      <ul>{getBuilds(list)}</ul>
+      <ul>{getBuilds(buildList)}</ul>
       <form action="/build" method="post" onSubmit={onButtonClick}>
         <input type="text" name="commit" placeholder="commit hash" />
         <input type="text" name="command" placeholder="run command" />
