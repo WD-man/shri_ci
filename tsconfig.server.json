@@ -9,6 +9,6 @@
     "esModuleInterop": true,
     "isolatedModules": false
   },
-  "include": ["server/**/*.ts"],
+  "include": ["server/**/*.ts", "agents/**/*.ts"],
   "exclude": [".next"]
 }

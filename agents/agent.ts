@@ -5,15 +5,20 @@ import bodyParser from 'body-parser';
 import { remove, outputJson, readdir } from 'fs-extra';
 import debugInit from 'debug';
 import { join } from 'path';
+import command from 'commander';
 import { execFile } from 'child_process';
 import config from '../ci.config.json';
+
+command.option('-p, --port [port]', 'port');
+command.parse(process.argv);
 
 const exec = promisify(execFile);
 
 const outputPath = join(process.cwd(), config.buildArtifactsRepo);
 
 const debug = debugInit('agent: ');
-const port = process.env.PORT || 9999;
+const errDebug = debugInit('err: ');
+const port = command.port || 9999;
 let agentId;
 
 const mainUrl = 'http://localhost:9001';
@@ -119,7 +124,7 @@ app.get('/ping', (req, res) => {
 });
 
 app.listen(port, async () => {
-  console.log(`server running at port ${port}`);
+  debug(`server running at port ${port}`);
   try {
     const { data } = await axios.get(`${mainUrl}/notify_agent?port=${port}`);
     const { id } = data;
@@ -128,6 +133,8 @@ app.listen(port, async () => {
     debug(`registered id: ${id}`);
   } catch (err) {
     if (err.code === 'ECONNREFUSED') {
+      errDebug('not master process');
+      debug('stopped');
       process.exit(2);
     }
   }

@@ -1,5 +1,7 @@
 {
   "port": 9001,
   "repo": "https://github.com/WD-man/shri_redux.git",
-  "buildArtifactsRepo": "build_artifacts"
+  "buildArtifactsRepo": "build_artifacts",
+  "agentsQuantity": 1,
+  "agentStartPort": 9999
 }

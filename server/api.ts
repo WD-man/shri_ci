@@ -64,6 +64,9 @@ const createAgent = ({ query }) => {
     port,
   };
   agents.push(agent);
+  console.log('-------------------------');
+  console.log('new agent', agent);
+  console.log('-------------------------');
   return newId;
 };
 
