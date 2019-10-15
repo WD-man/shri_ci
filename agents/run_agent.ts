@@ -15,10 +15,10 @@ let i = 0;
 const processes = [];
 
 while (i < count) {
-  const cwd = __dirname;
+  const cwd = process.cwd();
   const currentProcess = spawn(
     'node',
-    [isDev ? './agent.ts' : './agent.js', '-p', `${startPort + i}`],
+    [isDev ? './agent.ts' : '.next/server/agents/agent.js', '-p', `${startPort + i}`],
     {
       cwd,
       env: process.env,
